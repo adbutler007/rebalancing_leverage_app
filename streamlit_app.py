@@ -85,26 +85,26 @@ def main():
         
         col1, col2 = st.columns(2)
         with col1:
-            num_simulations = st.slider("Number of Simulations", 100, 10000, 1000)
+            num_simulations = st.slider("Number of Simulations", 1000, 10000, 1000)
             horizon_years = st.slider("Investment Horizon (Years)", 1, 30, 10)
             rebalance_freq = st.selectbox(
                 "Rebalance Frequency",
                 ['daily', 'weekly', 'monthly', 'quarterly', 'annual'],
-                index=2
+                index=0
             )
             
         with col2:
-            sharpe1 = st.number_input("Asset 1 Sharpe Ratio", 0.0, 2.0, 0.3)
-            sharpe2 = st.number_input("Asset 2 Sharpe Ratio", 0.0, 2.0, 0.3)
-            sigma1 = st.number_input("Asset 1 Volatility", 0.05, 0.50, 0.15)
-            sigma2 = st.number_input("Asset 2 Volatility", 0.05, 0.50, 0.15)
+            sharpe1 = st.number_input("Core Portfolio Sharpe Ratio", 0.0, 2.0, 0.3)
+            sharpe2 = st.number_input("Alternative Portfolio Sharpe Ratio", 0.0, 2.0, 0.3)
+            sigma1 = st.number_input("Core Portfolio Volatility", 0.05, 0.50, 0.15)
+            sigma2 = st.number_input("Alternative Portfolio Volatility", 0.05, 0.50, 0.15)
             
         rho = st.slider("Correlation (ρ)", -1.0, 1.0, 0.0)
         target_weights = st.columns(2)
         with target_weights[0]:
-            w1 = st.number_input("Asset 1 Weight", 0.0, 2.0, 1.0)
+            w1 = st.number_input("Core Portfolio Weight", 0.0, 2.0, 1.0)
         with target_weights[1]:
-            w2 = st.number_input("Asset 2 Weight", 0.0, 2.0, 1.0)
+            w2 = st.number_input("Alternative Portfolio Weight", 0.0, 2.0, 1.0)
             
         seed = st.number_input("Random Seed (optional)", value=None)
 
@@ -210,31 +210,34 @@ def main():
 
         # Create plots
         st.subheader("Performance Distribution")
-        fig = plt.figure(figsize=(12, 6), dpi=300)
         
-        # Calculate probabilities and means for each region
-        mask_under = cagr_diff < 0
-        mask_over = cagr_diff >= 0
+        # Trim outliers (top and bottom 1%)
+        lower_bound = np.percentile(cagr_diff, 1)
+        upper_bound = np.percentile(cagr_diff, 99)
+        mask = (cagr_diff >= lower_bound) & (cagr_diff <= upper_bound)
+        cagr_diff_trimmed = cagr_diff[mask]
         
-        # Get KDE data
-        kde = sns.kdeplot(cagr_diff, bw_method=0.2)
+        # Calculate statistics
+        under_mask = cagr_diff_trimmed < 0
+        over_mask = cagr_diff_trimmed >= 0
+        
+        # Calculate means and probabilities
+        mean_under = np.mean(cagr_diff_trimmed[under_mask])
+        mean_over = np.mean(cagr_diff_trimmed[over_mask])
+        prob_under = np.mean(under_mask)
+        prob_over = np.mean(over_mask)
+        
+        # Create density plot
+        kde = sns.kdeplot(cagr_diff_trimmed, bw_method=0.2)
         x = kde.lines[0].get_xdata()
         y = kde.lines[0].get_ydata()
         plt.close()  # Close temporary plot
         
-        # Calculate probabilities using trapezoidal integration
-        dx = x[1] - x[0]
+        # Create final density plot
+        fig, ax = plt.subplots(figsize=(12, 6), dpi=300)
+        
         mask_x_under = x < 0
         mask_x_over = x >= 0
-        prob_under = np.trapz(y[mask_x_under], x[mask_x_under])
-        prob_over = np.trapz(y[mask_x_over], x[mask_x_over])
-        
-        # Calculate mean values for each region
-        mean_under = np.mean(cagr_diff[mask_under])
-        mean_over = np.mean(cagr_diff[mask_over])
-        
-        # Create final plot
-        fig, ax = plt.subplots(figsize=(12, 6), dpi=300)
         
         # Plot underperform region
         ax.fill_between(x[mask_x_under], y[mask_x_under], 
@@ -255,21 +258,20 @@ def main():
                linewidth=2)
         
         # Add region labels
-        ax.text(mean_under, np.max(y) * 0.7,
+        label_y = np.max(y) * 0.5
+        ax.text(-0.02, label_y,
                 f'P(Underperform) = {prob_under:.1%}\nMean = {mean_under:.1%}',
-                horizontalalignment='center',
+                horizontalalignment='right',
                 verticalalignment='center',
                 color='#323A46',
-                fontsize=10,
-                bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+                fontsize=10)
         
-        ax.text(mean_over, np.max(y) * 0.7,
+        ax.text(0.02, label_y,
                 f'P(Outperform) = {prob_over:.1%}\nMean = {mean_over:.1%}',
-                horizontalalignment='center',
+                horizontalalignment='left',
                 verticalalignment='center',
                 color='#3A6A9C',
-                fontsize=10,
-                bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+                fontsize=10)
         
         # Add vertical line at x=0
         ax.axvline(0, color='black', linestyle='--', alpha=0.5)
@@ -280,38 +282,8 @@ def main():
         ax.set_xlabel("CAGR Difference (Rebalanced - Non-Rebalanced)")
         ax.set_ylabel("Density")
         ax.legend(frameon=False)
+        ax.set_xlim([min(x), max(x)])
         
-        st.pyplot(fig, dpi=300)
-
-        st.subheader("Performance Magnitude Analysis")
-        magnitude_data = {
-            'Mean': [np.mean(cagr_diff[cagr_diff < 0]), np.mean(cagr_diff[cagr_diff > 0])],
-            'Median': [np.median(cagr_diff[cagr_diff < 0]), np.median(cagr_diff[cagr_diff > 0])]
-        }
-        
-        fig = plt.figure(figsize=(12, 6), dpi=300)
-        x = np.arange(2)
-        width = 0.35
-        
-        # Create bars
-        mean_bars = plt.bar(x - width/2, magnitude_data['Mean'], width, label='Mean', color="#3A6A9C")
-        median_bars = plt.bar(x + width/2, magnitude_data['Median'], width, label='Median', color="#14CFA6")
-        
-        # Add value labels on top of each bar
-        def add_labels(bars):
-            for bar in bars:
-                height = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{height:.1%}',
-                        ha='center', va='bottom')
-        
-        add_labels(mean_bars)
-        add_labels(median_bars)
-        
-        plt.xticks(x, ['Underperformance', 'Outperformance'])
-        plt.ylabel('CAGR Difference')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
         st.pyplot(fig, dpi=300)
 
 if __name__ == "__main__":
