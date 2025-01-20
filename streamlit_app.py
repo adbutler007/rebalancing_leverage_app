@@ -187,7 +187,7 @@ def main():
         st.header("Simulation Results")
         
         # Create columns for metrics
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         with col1:
             st.metric("Mean CAGR Difference", f"{np.mean(cagr_diff):.2%}")
             st.metric("Probability of Outperformance", 
@@ -198,12 +198,6 @@ def main():
                      f"{np.mean(cagr_diff[cagr_diff < 0]):.2%}")
             st.metric("Mean Outperformance", 
                      f"{np.mean(cagr_diff[cagr_diff > 0]):.2%}")
-            
-        with col3:
-            st.metric("Positive Outcome Confidence", 
-                     f"{stats.percentileofscore(cagr_diff, 0):.1f}%")
-            st.metric("95% CI Width", 
-                     f"{np.percentile(cagr_diff, 95) - np.percentile(cagr_diff, 5):.2%}")
 
         # Create plots
         st.subheader("Performance Distribution")
