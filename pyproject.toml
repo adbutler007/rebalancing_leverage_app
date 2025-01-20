@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["adbutler007 <adam.butler@investresolve.com>"]
 readme = "README.md"
+package-mode = false
 packages = [
     { include = "*.py" },
 ]
