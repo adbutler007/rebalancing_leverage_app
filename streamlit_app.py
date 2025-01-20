@@ -211,10 +211,76 @@ def main():
         # Create plots
         st.subheader("Performance Distribution")
         fig = plt.figure(figsize=(12, 6), dpi=300)
-        sns.kdeplot(cagr_diff, fill=True, color="#3A6A9C", alpha=0.5)
-        plt.axvline(0, color='#323A46', linestyle='--')
-        plt.xlabel("CAGR Difference (Rebalanced - Non-Rebalanced)")
-        plt.ylabel("Density")
+        
+        # Calculate probabilities and means for each region
+        mask_under = cagr_diff < 0
+        mask_over = cagr_diff >= 0
+        
+        # Get KDE data
+        kde = sns.kdeplot(cagr_diff, bw_method=0.2)
+        x = kde.lines[0].get_xdata()
+        y = kde.lines[0].get_ydata()
+        plt.close()  # Close temporary plot
+        
+        # Calculate probabilities using trapezoidal integration
+        dx = x[1] - x[0]
+        mask_x_under = x < 0
+        mask_x_over = x >= 0
+        prob_under = np.trapz(y[mask_x_under], x[mask_x_under])
+        prob_over = np.trapz(y[mask_x_over], x[mask_x_over])
+        
+        # Calculate mean values for each region
+        mean_under = np.mean(cagr_diff[mask_under])
+        mean_over = np.mean(cagr_diff[mask_over])
+        
+        # Create final plot
+        fig, ax = plt.subplots(figsize=(12, 6), dpi=300)
+        
+        # Plot underperform region
+        ax.fill_between(x[mask_x_under], y[mask_x_under], 
+                       color='#323A46',
+                       alpha=0.3,
+                       label='Underperform')
+        ax.plot(x[mask_x_under], y[mask_x_under],
+               color='#323A46',
+               linewidth=2)
+        
+        # Plot outperform region
+        ax.fill_between(x[mask_x_over], y[mask_x_over],
+                       color='#3A6A9C',
+                       alpha=0.3,
+                       label='Outperform')
+        ax.plot(x[mask_x_over], y[mask_x_over],
+               color='#3A6A9C',
+               linewidth=2)
+        
+        # Add region labels
+        ax.text(mean_under, np.max(y) * 0.7,
+                f'P(Underperform) = {prob_under:.1%}\nMean = {mean_under:.1%}',
+                horizontalalignment='center',
+                verticalalignment='center',
+                color='#323A46',
+                fontsize=10,
+                bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        
+        ax.text(mean_over, np.max(y) * 0.7,
+                f'P(Outperform) = {prob_over:.1%}\nMean = {mean_over:.1%}',
+                horizontalalignment='center',
+                verticalalignment='center',
+                color='#3A6A9C',
+                fontsize=10,
+                bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        
+        # Add vertical line at x=0
+        ax.axvline(0, color='black', linestyle='--', alpha=0.5)
+        
+        # Style the plot
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.set_xlabel("CAGR Difference (Rebalanced - Non-Rebalanced)")
+        ax.set_ylabel("Density")
+        ax.legend(frameon=False)
+        
         st.pyplot(fig, dpi=300)
 
         st.subheader("Performance Magnitude Analysis")
