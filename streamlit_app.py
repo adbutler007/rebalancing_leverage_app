@@ -106,6 +106,21 @@ def main():
         with target_weights[1]:
             w2 = st.number_input("Alts Portfolio Weight", 0.0, 2.0, 1.0)
 
+        # Add disclaimers at bottom of sidebar
+        st.markdown("---")  # Horizontal line for separation
+        st.markdown("""
+        **Important Disclosures and Risk Warnings:**
+        
+        * Past performance is not indicative of future results
+        * The simulations presented are hypothetical and do not represent actual trading
+        * Results may vary significantly in live trading conditions
+        * This tool is for educational purposes only and should not be considered investment advice
+        * Investing involves substantial risk of loss and is not suitable for all investors
+        * Consult with a financial professional before making any investment decisions
+        
+        © 2024. All rights reserved. Registered Investment Advisor.
+        """, help="SEC Required Disclosures")
+
     if st.button("Run Simulation", type="primary"):
         with st.spinner("Running simulations..."):
             progress_bar = st.progress(0)
@@ -276,21 +291,6 @@ def main():
         ax.set_xlim([min(x), max(x)])
         
         st.pyplot(fig, dpi=300)
-        
-        # Add SEC disclaimers
-        st.markdown("""
-        ---
-        **Important Disclosures and Risk Warnings:**
-        
-        * Past performance is not indicative of future results
-        * The simulations presented are hypothetical and do not represent actual trading
-        * Results may vary significantly in live trading conditions
-        * This tool is for educational purposes only and should not be considered investment advice
-        * Investing involves substantial risk of loss and is not suitable for all investors
-        * Consult with a financial professional before making any investment decisions
-        
-        © 2024 Return Stacked®. All rights reserved.
-        """)
 
 if __name__ == "__main__":
     main()
