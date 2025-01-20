@@ -6,6 +6,8 @@ from plotting import MatPlotting
 from multiprocessing import Pool, cpu_count
 from scipy import stats
 import seaborn as sns
+import concurrent.futures
+import time
 
 # Set page config
 st.set_page_config(
@@ -47,11 +49,31 @@ html, body, [class*="css"] {
 """, unsafe_allow_html=True)
 
 def run_simulation_wrapper(params):
-    """Wrapper function to run simulations with progress tracking"""
-    print(f"Debug: Received params: {params}")  # Debug print
-    with Pool(cpu_count()) as pool:
+    """Wrapper function to run simulations with ProcessPoolExecutor"""
+    print(f"Debug: Starting simulation with params: {params}")
+    start_time = time.time()
+    
+    results = []
+    # Use ProcessPoolExecutor with max_workers based on CPU count
+    max_workers = min(4, cpu_count())  # Limit to 4 processes for cloud deployment
+    print(f"Debug: Using {max_workers} workers")
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # Create tasks
         tasks = [(i, params) for i in range(params['num_simulations'])]
-        results = pool.map(run_simulation, tasks)
+        # Submit all tasks at once since ProcessPoolExecutor handles memory better
+        futures = [executor.submit(run_simulation, task) for task in tasks]
+        
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                result = future.result()
+                results.append(result)
+            except Exception as e:
+                print(f"Debug: Error in simulation: {e}")
+                continue
+    
+    elapsed_time = time.time() - start_time
+    print(f"Debug: Simulation completed in {elapsed_time:.2f} seconds")
     return results
 
 def main():
@@ -88,6 +110,8 @@ def main():
 
     if st.button("Run Simulation", type="primary"):
         with st.spinner("Running simulations..."):
+            progress_bar = st.progress(0)
+            
             # Convert parameters to simulation format
             params = {
                 'num_simulations': num_simulations,
@@ -138,8 +162,9 @@ def main():
                 'num_simulations': params['num_simulations']
             }
 
-            # Run simulations
+            # Run simulations with progress tracking
             results = run_simulation_wrapper(sim_params)
+            progress_bar.empty()
             
             # Process results
             cagr_diff = np.array([r[0] for r in results])
