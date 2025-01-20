@@ -201,37 +201,30 @@ def main():
         # Display results
         st.header("Simulation Results")
         
-        # Create columns for metrics
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Mean CAGR Difference", f"{np.mean(cagr_diff):.2%}")
-            st.metric("Probability of Outperformance", 
-                     f"{np.mean(cagr_diff > 0):.1%}")
-            
-        with col2:
-            st.metric("Mean Underperformance", 
-                     f"{np.mean(cagr_diff[cagr_diff < 0]):.2%}")
-            st.metric("Mean Outperformance", 
-                     f"{np.mean(cagr_diff[cagr_diff > 0]):.2%}")
-
-        # Create plots
-        st.subheader("Performance Distribution")
-        
-        # Trim outliers (top and bottom 1%)
+        # Create columns for metrics - using the same trimmed data as the plot
         lower_bound = np.percentile(cagr_diff, 1)
         upper_bound = np.percentile(cagr_diff, 99)
         mask = (cagr_diff >= lower_bound) & (cagr_diff <= upper_bound)
         cagr_diff_trimmed = cagr_diff[mask]
         
-        # Calculate statistics
+        # Calculate statistics using trimmed data
         under_mask = cagr_diff_trimmed < 0
         over_mask = cagr_diff_trimmed >= 0
         
-        # Calculate means and probabilities
-        mean_under = np.mean(cagr_diff_trimmed[under_mask])
-        mean_over = np.mean(cagr_diff_trimmed[over_mask])
-        prob_under = np.mean(under_mask)
-        prob_over = np.mean(over_mask)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Mean CAGR Difference", f"{np.mean(cagr_diff_trimmed):.2%}")
+            st.metric("Probability of Outperformance", 
+                     f"{np.mean(over_mask):.1%}")
+            
+        with col2:
+            st.metric("Mean Underperformance", 
+                     f"{np.mean(cagr_diff_trimmed[under_mask]):.2%}")
+            st.metric("Mean Outperformance", 
+                     f"{np.mean(cagr_diff_trimmed[over_mask]):.2%}")
+
+        # Create plots
+        st.subheader("Performance Distribution")
         
         # Create density plot
         kde = sns.kdeplot(cagr_diff_trimmed, bw_method=0.2)
@@ -266,14 +259,14 @@ def main():
         # Add region labels
         label_y = np.max(y) * 0.5
         ax.text(-0.02, label_y,
-                f'P(Underperform) = {prob_under:.1%}\nMean = {mean_under:.1%}',
+                f'P(Underperform) = {np.mean(under_mask):.1%}',
                 horizontalalignment='right',
                 verticalalignment='center',
                 color='#323A46',
                 fontsize=10)
         
         ax.text(0.02, label_y,
-                f'P(Outperform) = {prob_over:.1%}\nMean = {mean_over:.1%}',
+                f'P(Outperform) = {np.mean(over_mask):.1%}',
                 horizontalalignment='left',
                 verticalalignment='center',
                 color='#3A6A9C',
