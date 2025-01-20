@@ -77,7 +77,7 @@ def run_simulation_wrapper(params):
     return results
 
 def main():
-    st.title("Portfolio Rebalancing Premium Simulator")
+    st.title("Return Stacked(R) Rebalancing Premium Simulator", anchor=False)
     st.markdown("Explore the impact of portfolio rebalancing under different market conditions")
 
     with st.sidebar:
@@ -95,18 +95,16 @@ def main():
             
         with col2:
             sharpe1 = st.number_input("Core Portfolio Sharpe Ratio", 0.0, 2.0, 0.3)
-            sharpe2 = st.number_input("Alternative Portfolio Sharpe Ratio", 0.0, 2.0, 0.3)
+            sharpe2 = st.number_input("Alts Portfolio Sharpe Ratio", 0.0, 2.0, 0.3)
             sigma1 = st.number_input("Core Portfolio Volatility", 0.05, 0.50, 0.15)
-            sigma2 = st.number_input("Alternative Portfolio Volatility", 0.05, 0.50, 0.15)
+            sigma2 = st.number_input("Alts Portfolio Volatility", 0.05, 0.50, 0.15)
             
         rho = st.slider("Correlation (ρ)", -1.0, 1.0, 0.0)
         target_weights = st.columns(2)
         with target_weights[0]:
             w1 = st.number_input("Core Portfolio Weight", 0.0, 2.0, 1.0)
         with target_weights[1]:
-            w2 = st.number_input("Alternative Portfolio Weight", 0.0, 2.0, 1.0)
-            
-        seed = st.number_input("Random Seed (optional)", value=None)
+            w2 = st.number_input("Alts Portfolio Weight", 0.0, 2.0, 1.0)
 
     if st.button("Run Simulation", type="primary"):
         with st.spinner("Running simulations..."):
@@ -122,8 +120,7 @@ def main():
                 'sharpe2': sharpe2,
                 'sigma1': sigma1,
                 'sigma2': sigma2,
-                'rho': rho,
-                'seed': seed
+                'rho': rho
             }
 
             # Calculate derived parameters
@@ -158,8 +155,8 @@ def main():
                 'rebalance_days': rebalance_days,
                 'total_days': total_days,
                 'horizon_years': params['horizon_years'],
-                'seed': params['seed'],
-                'num_simulations': params['num_simulations']
+                'num_simulations': params['num_simulations'],
+                'seed': 42  # Add fixed seed
             }
 
             # Run simulations with progress tracking
@@ -285,6 +282,21 @@ def main():
         ax.set_xlim([min(x), max(x)])
         
         st.pyplot(fig, dpi=300)
+        
+        # Add SEC disclaimers
+        st.markdown("""
+        ---
+        **Important Disclosures and Risk Warnings:**
+        
+        * Past performance is not indicative of future results
+        * The simulations presented are hypothetical and do not represent actual trading
+        * Results may vary significantly in live trading conditions
+        * This tool is for educational purposes only and should not be considered investment advice
+        * Investing involves substantial risk of loss and is not suitable for all investors
+        * Consult with a financial professional before making any investment decisions
+        
+        © 2024 Return Stacked(R). All rights reserved.
+        """)
 
 if __name__ == "__main__":
     main()
