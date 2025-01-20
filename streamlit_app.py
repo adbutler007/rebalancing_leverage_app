@@ -77,7 +77,7 @@ def run_simulation_wrapper(params):
     return results
 
 def main():
-    st.title("Return Stacked(R) Rebalancing Premium Simulator", anchor=False)
+    st.title("Return Stacked® Rebalancing Premium Simulator", anchor=False)
     st.markdown("Explore the impact of portfolio rebalancing under different market conditions")
 
     with st.sidebar:
@@ -295,7 +295,7 @@ def main():
         * Investing involves substantial risk of loss and is not suitable for all investors
         * Consult with a financial professional before making any investment decisions
         
-        © 2024 Return Stacked(R). All rights reserved.
+        © 2024 Return Stacked®. All rights reserved.
         """)
 
 if __name__ == "__main__":
