@@ -77,34 +77,34 @@ def run_simulation_wrapper(params):
     return results
 
 def main():
-    st.title("Return Stacked® Rebalancing Premium Simulator", anchor=False)
+    st.markdown("## Return Stacked® Rebalancing Premium Simulator")
     st.markdown("Explore the impact of portfolio rebalancing under different market conditions")
 
     with st.sidebar:
-        st.header("Simulation Parameters")
+        st.markdown("### Simulation Parameters")
         
         col1, col2 = st.columns(2)
         with col1:
-            num_simulations = st.slider("Number of Simulations", 1000, 10000, 1000)
-            horizon_years = st.slider("Investment Horizon (Years)", 1, 30, 10)
+            num_simulations = st.slider("Simulations", 1000, 10000, 1000)
+            horizon_years = st.slider("Years", 1, 30, 10)
             rebalance_freq = st.selectbox(
-                "Rebalance Frequency",
+                "Rebalance",
                 ['daily', 'weekly', 'monthly', 'quarterly', 'annual'],
                 index=0
             )
             
         with col2:
-            sharpe1 = st.number_input("Core Portfolio Sharpe Ratio", 0.0, 2.0, 0.3)
-            sharpe2 = st.number_input("Alts Portfolio Sharpe Ratio", 0.0, 2.0, 0.3)
-            sigma1 = st.number_input("Core Portfolio Volatility", 0.05, 0.50, 0.15)
-            sigma2 = st.number_input("Alts Portfolio Volatility", 0.05, 0.50, 0.15)
+            sharpe1 = st.number_input("Core Sharpe", 0.0, 2.0, 0.3)
+            sharpe2 = st.number_input("Stack Sharpe", 0.0, 2.0, 0.3)
+            sigma1 = st.number_input("Core Vol", 0.05, 0.50, 0.15)
+            sigma2 = st.number_input("Stack Vol", 0.05, 0.50, 0.15)
             
         rho = st.slider("Correlation (ρ)", -1.0, 1.0, 0.0)
         target_weights = st.columns(2)
         with target_weights[0]:
-            w1 = st.number_input("Core Portfolio Weight", 0.0, 2.0, 1.0)
+            w1 = st.number_input("Core Weight", 0.0, 2.0, 1.0)
         with target_weights[1]:
-            w2 = st.number_input("Alts Portfolio Weight", 0.0, 2.0, 1.0)
+            w2 = st.number_input("Stack Weight", 0.0, 2.0, 1.0)
 
         # Add disclaimers at bottom of sidebar
         st.markdown("---")  # Horizontal line for separation
